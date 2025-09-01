@@ -152,7 +152,7 @@ st.caption("ML prediction + personalized retrofit advice (prototype)")
 with st.sidebar:
     # --- Company logo at the very top (file in repo root) ---
     try:
-        st.image("Logo.png", use_column_width=True)
+        st.image("Logo.png", use_container_width=True)
     except Exception:
         st.info("Upload `Logo.png` to the repo root to show your logo here.")
 
