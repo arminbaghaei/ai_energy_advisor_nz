@@ -192,6 +192,22 @@ with st.sidebar:
     if st.button("⬅️ Back to intro"):
         st.session_state.started = False
         RERUN()
+st.markdown(
+    """
+    <style>
+    .stTabs [role="tablist"] button {
+        font-size: 16px;
+        font-weight: 600;
+        padding: 10px 16px;
+    }
+    .stTabs [role="tablist"] button[aria-selected="true"] {
+        background-color: #f0f2f6;
+        border-bottom: 3px solid #0068c9;
+    }
+    </style>
+    """,
+    unsafe_allow_html=True
+)
 
 tab1, tab2, tab3, tab4 = st.tabs(["🔮 Predictor","💡 Recommendations","💬 Advisor Chat","📦 Batch & Export"])
 
