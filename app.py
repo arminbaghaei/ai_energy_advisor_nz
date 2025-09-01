@@ -8,17 +8,13 @@ import matplotlib.pyplot as plt
 
 st.set_page_config(page_title="AI Energy Advisor (NZ Homes)", layout="wide")
 
-# ------------------------------------------------------------------
-# Rerun compatibility (Streamlit 1.36+: st.rerun; older: experimental)
-# ------------------------------------------------------------------
+# ---------- Rerun compatibility ----------
 try:
     RERUN = st.rerun
 except AttributeError:
     RERUN = st.experimental_rerun
 
-# -----------------------------
-# Helpers
-# -----------------------------
+# ---------- Encoders & constants ----------
 CAT_MAPS = {
     "insulation_level": {"poor":0, "moderate":1, "good":2},
     "heating_system": {"resistive_heaters":0, "heat_pump":1, "gas_heater":2, "wood_burner":3},
@@ -26,7 +22,6 @@ CAT_MAPS = {
     "air_tightness": {"leaky":0, "typical":1, "tight":2},
     "hot_water_system": {"electric_cylinder":0, "gas_instant":1, "heat_pump_water_heater":2}
 }
-
 INPUT_COLUMNS = [
     "climate_zone","floor_area_m2","building_age_years","insulation_level","heating_system",
     "window_glazing","air_tightness","occupancy","has_mechanical_ventilation",
@@ -44,6 +39,7 @@ CLIMATE_ZONE_OPTIONS = [
     ("Zone 6 — Central Plateau, Southern Alps, Queenstown-Lakes, Southland", 6),
 ]
 
+# ---------- Helpers ----------
 def encode_df(df: pd.DataFrame) -> pd.DataFrame:
     out = df.copy()
     for col, mapping in CAT_MAPS.items():
@@ -53,7 +49,6 @@ def encode_df(df: pd.DataFrame) -> pd.DataFrame:
 
 @st.cache_data
 def load_sample():
-    # expects data/sample_nz_housing_energy.csv in repo
     return pd.read_csv("data/sample_nz_housing_energy.csv")
 
 def train_model(df: pd.DataFrame):
@@ -112,15 +107,13 @@ def evaluate_measures(model, base_features: dict, base_kwh: float, e_price: floa
     recs.sort(key=lambda r: r["annual_saving_nzd"], reverse=True)
     return pd.DataFrame(recs)
 
-# -----------------------------
-# Load data / model
-# -----------------------------
+# ---------- Load data / model (do this before any UI) ----------
 sample_df = load_sample()
 model, scores = train_model(sample_df)
 
-# =========================================
-# Intro gate
-# =========================================
+# ==============================================================
+# INTRO GATE (must be before ANY st.title/tabs/sidebar rendering)
+# ==============================================================
 if "started" not in st.session_state:
     st.session_state.started = False
 
@@ -148,11 +141,11 @@ if not st.session_state.started:
     if st.button("Next → Show the main features", type="primary"):
         st.session_state.started = True
         RERUN()
-    st.stop()
+    st.stop()  # IMPORTANT: do not render anything else until Next is pressed
 
-# -----------------------------
-# Full App UI (after Next)
-# -----------------------------
+# =====================
+# MAIN APP (after Next)
+# =====================
 st.title("🏠 AI Energy Advisor for NZ Homes")
 st.caption("ML prediction + personalized retrofit advice (prototype)")
 
@@ -161,11 +154,11 @@ with st.sidebar:
     selected_zone = st.selectbox(
         "NZBC H1 climate zone",
         options=CLIMATE_ZONE_OPTIONS,
-        index=1,  # default Zone 2
+        index=1,
         format_func=lambda opt: opt[0],
         help="Defined by the NZ Building Code (H1). Higher zone numbers = colder climates."
     )
-    cz = selected_zone[1]  # numeric value for the model
+    cz = selected_zone[1]  # numeric for the model
 
     floor = st.number_input("Floor area (m²)", 40, 400, 140, 1)
     age = st.number_input("Building age (years)", 0, 140, 35, 1)
@@ -227,26 +220,23 @@ with tab2:
 
 with tab3:
     st.subheader("Ask the advisor")
-    # Initial message
     if "chat" not in st.session_state:
         st.session_state.chat = [
             {"role":"assistant","content": "Kia ora! Tell me your goals—lower bills, reduce damp/mould risk, or increase comfort?"}
         ]
-    # Render history
     for msg in st.session_state.chat:
         with st.chat_message(msg["role"]):
             st.write(msg["content"])
-    # User input
     user_msg = st.chat_input("Type your question")
     if user_msg:
         st.session_state.chat.append({"role":"user","content": user_msg})
 
-        # Rebuild recommendations snapshot for tailored tips
+        # Build quick tips from recommendations
         recs_df = evaluate_measures(model, features, pred_kwh, features["electricity_price_nzd_per_kwh"])
         top = recs_df.head(3).to_dict(orient="records")
         tips = [f"- {t['measure']} (~{t['annual_saving_kwh']:,.0f} kWh / ${t['annual_saving_nzd']:,.0f}/yr)" for t in top]
 
-        # Damp / mould risk quick tips (auto triggers)
+        # Damp / mould risk quick tips (auto)
         mould_risk = (
             features["insulation_level"] in ["poor","moderate"] or
             features["air_tightness"] == "leaky" or
@@ -254,9 +244,8 @@ with tab3:
             features["climate_zone"] >= 4
         )
         asked_about_mould = any(k in user_msg.lower() for k in ["mould", "mold", "damp", "condensation"])
-
         if mould_risk or asked_about_mould:
-            tips.insert(0, "• **Damp/mould risk tips:** ensure kitchen & bathroom extract fans vent outside; heat main living area to ≥18 °C; fix draughts; use thermal curtains; maintain RH < 60%.")
+            tips.insert(0, "• **Damp/mould risk tips:** run kitchen/bath fans vented outside; heat living areas to ≥18 °C; fix draughts; use thermal curtains; aim for RH < 60%.")
 
         if features["heating_system"] != "heat_pump":
             tips.append("- Consider a modern heat pump for efficient heating and dehumidification.")
