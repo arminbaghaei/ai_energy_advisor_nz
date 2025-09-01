@@ -152,11 +152,16 @@ st.caption("ML prediction + personalized retrofit advice (prototype)")
 with st.sidebar:
     # --- Company logo at the very top (file in repo root) ---
     try:
-        st.image("Logo.png", use_container_width=True)
+        st.image("Logo.png", width=140)  # smaller fixed width (adjust 120–160 as you like)
+        st.markdown(
+            "<p style='text-align:center; font-size:12px; color:gray;'>"
+            "Powered by <b>Tech Innovation Experts Ltd.</b></p>",
+            unsafe_allow_html=True
+        )
     except Exception:
         st.info("Upload `Logo.png` to the repo root to show your logo here.")
 
-    st.markdown("<div style='margin-top:4px;'></div>", unsafe_allow_html=True)
+    st.markdown("<div style='margin-top:6px;'></div>", unsafe_allow_html=True)
     st.header("🏡 House inputs")
 
     selected_zone = st.selectbox(
