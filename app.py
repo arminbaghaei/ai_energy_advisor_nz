@@ -118,7 +118,7 @@ if "started" not in st.session_state:
     st.session_state.started = False
 
 if not st.session_state.started:
-    st.title("🏠 AI Energy Advisor for NZ Homes")
+    st.title("🏠 Energy Advisor for Your Home")
     st.subheader("What this tool does")
     st.markdown(
         """
@@ -146,7 +146,7 @@ if not st.session_state.started:
 # =====================
 # MAIN APP (after Next)
 # =====================
-st.title("🏠 AI Energy Advisor for NZ Homes")
+st.title("🏠 Your Home Energy Advisor")
 st.caption("ML prediction + personalized retrofit advice (prototype)")
 
 with st.sidebar:
