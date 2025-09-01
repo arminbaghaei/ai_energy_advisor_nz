@@ -118,30 +118,66 @@ if "started" not in st.session_state:
     st.session_state.started = False
 
 if not st.session_state.started:
+    # --- Company branding ---
+    try:
+        st.image("Logo.png", width=160)
+    except Exception:
+        st.info("Upload `Logo.png` to show your company branding here.")
+
+    st.markdown(
+        """
+        <p style='text-align:center; font-size:14px;'>
+        Powered by <a href='https://techinnovationexperts.co.nz' target='_blank'
+        style='text-decoration:none; font-weight:bold; color:#00B050;'>
+        Tech Innovation Experts Ltd.</a>
+        </p>
+        """,
+        unsafe_allow_html=True
+    )
+
+    # --- Intro content ---
     st.title("🏠 Energy Advisor for Your Home")
     st.subheader("What this tool does")
     st.markdown(
         """
-- **Predicts** your home’s annual electricity use and bill from NZ-specific inputs (H1 climate zone, floor area, age, insulation, glazing, airtightness, heating, hot water, PV).  
-- **Recommends** upgrades (heat pump, insulation, glazing, draught-stopping, HPWH, PV) ranked by **kWh** and **$** savings.  
+- **Predicts** your home’s annual electricity use and bill from NZ-specific inputs (climate zone, floor area, insulation, etc.).  
+- **Recommends** upgrades (heat pump, insulation, glazing, PV, etc.) ranked by savings.  
 - **Explains seasonality** with an estimated monthly breakdown.  
-- **Batch mode** to upload a CSV of many homes.
+- **Batch mode** lets you upload a CSV of many homes.
         """
     )
+
     with st.expander("How to use (30 seconds)"):
         st.markdown(
             """
-1. Open the **sidebar**, choose your **NZ H1 climate zone** (by region name) and house details.  
+1. Open the **sidebar**, enter your home’s details.  
 2. See **Predictor** for energy & bill estimates.  
-3. Open **Recommendations** for savings and capex ranges.  
-4. Use **Batch & Export** if you have a CSV.
+3. Open **Recommendations** for upgrade options.  
+4. Use **Batch & Export** for multiple homes.  
             """
         )
-    st.caption("Disclaimer: Prototype estimates only — seek quotes and professional advice for decisions.")
+
+    # --- License notice ---
+    st.markdown(
+        """
+        <hr>
+        <p style='text-align:center; font-size:12px; color:gray;'>
+        © 2025 Tech Innovation Experts Ltd. | 
+        Licensed for demonstration & educational use only.<br>
+        <a href="https://github.com/yourusername/ai_energy_advisor_nz/blob/main/LICENSE.txt"
+        target="_blank">View full license</a>
+        </p>
+        """,
+        unsafe_allow_html=True
+    )
+
+    # --- Next button ---
     if st.button("Next → Show the main features", type="primary"):
         st.session_state.started = True
         RERUN()
+
     st.stop()
+
 
 # =====================
 # MAIN APP (after Next)
