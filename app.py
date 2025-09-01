@@ -27,11 +27,11 @@ INPUT_COLUMNS = [
 
 TARGET = "annual_energy_kwh"
 
-# Friendly climate zone labels
+# NZ Building Code H1 climate zones (friendly labels -> numeric code)
 CLIMATE_ZONE_OPTIONS = [
     ("Zone 1 — Northland & Auckland", 1),
     ("Zone 2 — Waikato, Bay of Plenty, Gisborne, Taranaki", 2),
-    ("Zone 3 — Lower North Island (Hawke’s Bay, Wairarapa, Wellington coastal)", 3),
+    ("Zone 3 — Lower North Island (Hawke’s Bay, Manawatū, Wairarapa, Wellington coastal)", 3),
     ("Zone 4 — Northern South Island (Nelson, Tasman, Marlborough, West Coast north)", 4),
     ("Zone 5 — Canterbury plains & coastal Otago", 5),
     ("Zone 6 — Central Plateau, Southern Alps, Queenstown-Lakes, Southland", 6),
@@ -46,6 +46,7 @@ def encode_df(df: pd.DataFrame) -> pd.DataFrame:
 
 @st.cache_data
 def load_sample():
+    # expects data/sample_nz_housing_energy.csv in repo
     return pd.read_csv("data/sample_nz_housing_energy.csv")
 
 def train_model(df: pd.DataFrame):
@@ -113,22 +114,56 @@ def evaluate_measures(model, base_features: dict, base_kwh: float, e_price: floa
 sample_df = load_sample()
 model, scores = train_model(sample_df)
 
+# =========================================
+# Intro screen (shows once, then "Next →")
+# =========================================
+if "started" not in st.session_state:
+    st.session_state.started = False
+
+if not st.session_state.started:
+    st.title("🏠 AI Energy Advisor for NZ Homes")
+    st.subheader("What this tool does")
+    st.markdown(
+        """
+- **Predicts** annual household electricity use and bill from key home details (NZ H1 climate zone, size, age, insulation, windows, airtightness, heating, hot water, PV).
+- **Recommends** upgrades (e.g., heat pump, insulation, glazing, draught-stopping, HPWH, PV) ranked by **kWh** and **$ saved**.
+- **Explains seasonality** with an estimated monthly breakdown.
+- **Batch mode**: upload a CSV of homes to get predictions for all.
+        """
+    )
+    with st.expander("How to use in 30 seconds"):
+        st.markdown(
+            """
+1. Open the **sidebar** and choose your **NZ H1 climate zone** (by region name), floor area, and current systems.  
+2. Go to **Predictor** to see energy & bill estimates.  
+3. Open **Recommendations** to see savings and capex ranges.  
+4. Use **Batch & Export** if you have a CSV of multiple homes.
+            """
+        )
+    st.caption("Disclaimer: Prototype estimates only — always get quotes and professional advice for investment decisions.")
+    if st.button("Next → Show the full features", type="primary"):
+        st.session_state.started = True
+        st.rerun()
+    st.stop()
+
 # -----------------------------
-# UI
+# Full App UI (after Next)
 # -----------------------------
 st.title("🏠 AI Energy Advisor for NZ Homes")
 st.caption("ML prediction + personalized retrofit advice (prototype)")
 
 with st.sidebar:
     st.header("🏡 House inputs")
-    # Friendly climate zone selector
+
+    # Friendly climate zone selector with tooltip; returns numeric 1–6
     selected_zone = st.selectbox(
         "NZBC H1 climate zone",
         options=CLIMATE_ZONE_OPTIONS,
-        index=1,
-        format_func=lambda opt: opt[0]
+        index=1,  # default Zone 2
+        format_func=lambda opt: opt[0],
+        help="Defined by the NZ Building Code (H1). Higher zone numbers = colder climates."
     )
-    cz = selected_zone[1]  # numeric value 1–6 for the model
+    cz = selected_zone[1]  # numeric value for the model
 
     floor = st.number_input("Floor area (m²)", 40, 400, 140, 1)
     age = st.number_input("Building age (years)", 0, 140, 35, 1)
@@ -157,7 +192,95 @@ with st.sidebar:
         "electricity_price_nzd_per_kwh": float(price),
     }
 
-# Tabs (unchanged)
+    st.caption("Hint: 1=Auckland/Northland · 2=Upper NI · 3=Lower NI · 4=Top of SI · 5=Canterbury/coastal Otago · 6=Central Plateau/Southern Alps/Southland")
+    if st.button("Back to intro"):
+        st.session_state.started = False
+        st.rerun()
+
 tab1, tab2, tab3, tab4 = st.tabs(["🔮 Predictor","💡 Recommendations","💬 Advisor Chat","📦 Batch & Export"])
 
-# ... keep the rest of your Predictor / Recommendations / Chat / Batch code unchanged ...
+with tab1:
+    st.subheader("Predicted annual electricity use")
+    pred_kwh = predict_one(model, features)
+    pred_cost = pred_kwh * features["electricity_price_nzd_per_kwh"]
+    colA, colB, colC = st.columns(3)
+    colA.metric("Annual energy", f"{pred_kwh:,.0f} kWh")
+    colB.metric("Estimated annual bill", f"${pred_cost:,.0f}")
+    colC.metric("Model MAE (test)", f"{scores['mae']:,.0f} kWh")
+
+    st.divider()
+    st.markdown("**Monthly breakdown (approx.)**")
+    mb = monthly_breakdown(pred_kwh, features["climate_zone"])
+    fig, ax = plt.subplots()
+    ax.bar(mb["month"], mb["kWh"])
+    ax.set_xlabel("Month"); ax.set_ylabel("kWh"); ax.set_title("Monthly Energy Use (Estimated)")
+    st.pyplot(fig)
+
+with tab2:
+    st.subheader("Top retrofit & behavior recommendations")
+    recs_df = evaluate_measures(model, features, pred_kwh, features["electricity_price_nzd_per_kwh"])
+    st.dataframe(recs_df, use_container_width=True)
+    st.caption("Payback depends on quotes and usage. Use this to shortlist measures.")
+
+with tab3:
+    st.subheader("Ask the advisor")
+    if "chat" not in st.session_state:
+        st.session_state.chat = [
+            {"role":"assistant","content": "Kia ora! Tell me your goals—lower bills, reduce damp/mould risk, or increase comfort?"}
+        ]
+    for msg in st.session_state.chat:
+        with st.chat_message(msg["role"]):
+            st.write(msg["content"])
+    user_msg = st.chat_input("Type your question")
+    if user_msg:
+        st.session_state.chat.append({"role":"user","content": user_msg})
+        # build quick tips from current top 3 recommendations
+        recs_df = evaluate_measures(model, features, pred_kwh, features["electricity_price_nzd_per_kwh"])
+        tips = []
+        top = recs_df.head(3).to_dict(orient="records")
+        for t in top:
+            tips.append(f"- {t['measure']} (~{t['annual_saving_kwh']:,.0f} kWh / ${t['annual_saving_nzd']:,.0f} per year)")
+        if features["insulation_level"] in ["poor","moderate"]:
+            tips.append("- Improve insulation levels; it reduces heating demand and improves comfort.")
+        if features["window_glazing"] == "single":
+            tips.append("- Upgrade from single to double glazing; combine with heavy curtains.")
+        if features["heating_system"] != "heat_pump":
+            tips.append("- Consider a modern heat pump for efficient heating and dehumidification.")
+        if features["air_tightness"] == "leaky":
+            tips.append("- Draught-proof doors & windows; maintain fresh air with trickle vents or HRV.")
+        if features["solar_pv_kw"] < 1.0:
+            tips.append("- Add rooftop PV if the roof has good sun exposure.")
+        resp = [
+            f"Based on your home (~{pred_kwh:,.0f} kWh/yr, ~${pred_cost:,.0f}/yr), try:",
+            *tips,
+            "Want me to sort by lowest likely capex?"
+        ]
+        st.session_state.chat.append({"role":"assistant","content": "\n".join(resp)})
+        st.experimental_rerun()
+
+with tab4:
+    st.subheader("Batch predict & export")
+    st.markdown("Upload a CSV with the columns shown in the data dictionary.")
+    up = st.file_uploader("Upload CSV", type=["csv"])
+    if up is not None:
+        try:
+            user_df = pd.read_csv(up)
+            missing = [c for c in INPUT_COLUMNS if c not in user_df.columns]
+            if missing:
+                st.error(f"Missing columns: {missing}")
+            else:
+                preds = []
+                for _, r in user_df.iterrows():
+                    feats = {k: r[k] for k in INPUT_COLUMNS}
+                    k = predict_one(model, feats)
+                    cost = k * float(r["electricity_price_nzd_per_kwh"])
+                    preds.append({"annual_energy_kwh_pred": k, "annual_bill_nzd_pred": cost})
+                pred_df = pd.concat([user_df.reset_index(drop=True), pd.DataFrame(preds)], axis=1)
+                st.dataframe(pred_df.head(50), use_container_width=True)
+                csv_bytes = pred_df.to_csv(index=False).encode("utf-8")
+                st.download_button("Download predictions CSV", data=csv_bytes, file_name="predictions.csv", mime="text/csv")
+        except Exception as e:
+            st.error(f"Failed to read CSV: {e}")
+
+st.divider()
+st.caption("Disclaimer: Prototype estimates only. For investment decisions, seek professional advice and quotes.")
