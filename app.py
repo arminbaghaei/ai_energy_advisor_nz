@@ -152,10 +152,14 @@ st.caption("ML prediction + personalized retrofit advice (prototype)")
 with st.sidebar:
     # --- Company logo at the very top (file in repo root) ---
     try:
-        st.image("Logo.png", width=140)  # smaller fixed width (adjust 120–160 as you like)
+        st.image("Logo.png", width=140)  # smaller fixed width
         st.markdown(
-            "<p style='text-align:center; font-size:12px; color:gray;'>"
-            "Powered by <b>Tech Innovation Experts Ltd.</b></p>",
+            """
+            <p style='text-align:center; font-size:12px; color:gray;'>
+            Powered by <a href='https://tinxltd.wixsite.com/home' target='_blank' style='text-decoration:none; color:#00B050; font-weight:bold;'>
+            Tech Innovation Experts Ltd.</a>
+            </p>
+            """,
             unsafe_allow_html=True
         )
     except Exception:
@@ -163,6 +167,7 @@ with st.sidebar:
 
     st.markdown("<div style='margin-top:6px;'></div>", unsafe_allow_html=True)
     st.header("🏡 House inputs")
+
 
     selected_zone = st.selectbox(
         "NZBC H1 climate zone",
