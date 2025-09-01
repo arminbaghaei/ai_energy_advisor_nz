@@ -151,6 +151,8 @@ st.caption("ML prediction + personalized retrofit advice (prototype)")
 
 with st.sidebar:
     st.header("🏡 House inputs")
+    st.sidebar.image("logo.png", width=180)
+    st.header("🏡 House inputs")
     selected_zone = st.selectbox(
         "NZBC H1 climate zone",
         options=CLIMATE_ZONE_OPTIONS,
