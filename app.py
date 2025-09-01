@@ -207,10 +207,14 @@ with tab1:
     st.divider()
     st.markdown("**Monthly breakdown (approx.)**")
     mb = monthly_breakdown(pred_kwh, features["climate_zone"])
-    fig, ax = plt.subplots()
+    fig, ax = plt.subplots(figsize=(6,3))   # smaller width x height
     ax.bar(mb["month"], mb["kWh"])
-    ax.set_xlabel("Month"); ax.set_ylabel("kWh"); ax.set_title("Monthly Energy Use (Estimated)")
+    ax.set_xlabel("Month", fontsize=9)
+    ax.set_ylabel("kWh", fontsize=9)
+    ax.set_title("Monthly Energy Use (Estimated)", fontsize=10)
+    plt.tight_layout()
     st.pyplot(fig)
+
 
 with tab2:
     st.subheader("Top retrofit & behavior recommendations")
