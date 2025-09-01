@@ -118,31 +118,34 @@ if "started" not in st.session_state:
     st.session_state.started = False
 
 if not st.session_state.started:
-    # --- Company branding ---
-    try:
-        st.image("Logo.png", width=160)
-    except Exception:
-        st.info("Upload `Logo.png` to show your company branding here.")
-
-    st.markdown(
-        """
-        <p style='text-align:center; font-size:14px;'>
-        Powered by <a href='https://techinnovationexperts.co.nz' target='_blank'
-        style='text-decoration:none; font-weight:bold; color:#00B050;'>
-        Tech Innovation Experts Ltd.</a>
-        </p>
-        """,
-        unsafe_allow_html=True
-    )
+    # --- Company branding: logo + powered-by inline ---
+    intro_c1, intro_c2 = st.columns([1, 6])
+    with intro_c1:
+        try:
+            st.image("Logo.png", width=44)
+        except Exception:
+            st.write("")  # no-op if missing
+    with intro_c2:
+        st.markdown(
+            """
+            <div style='line-height:1.2; margin-top:6px;'>
+                <span style='font-size:14px;'>Powered by
+                <a href='https://tinxltd.wixsite.com/home' target='_blank'
+                   style='text-decoration:none; font-weight:700; color:#00B050;'>
+                   Tech Innovation Experts Ltd.</a></span>
+            </div>
+            """,
+            unsafe_allow_html=True
+        )
 
     # --- Intro content ---
     st.title("🏠 Energy Advisor for Your Home")
     st.subheader("What this tool does")
     st.markdown(
         """
-- **Predicts** your home’s annual electricity use and bill from NZ-specific inputs (climate zone, floor area, insulation, etc.).  
-- **Recommends** upgrades (heat pump, insulation, glazing, PV, etc.) ranked by savings.  
-- **Explains seasonality** with an estimated monthly breakdown.  
+- **Predicts** your home’s annual electricity use and bill from NZ-specific inputs (climate zone, floor area, insulation, etc.).
+- **Recommends** upgrades (heat pump, insulation, glazing, PV, etc.) ranked by savings.
+- **Explains seasonality** with an estimated monthly breakdown.
 - **Batch mode** lets you upload a CSV of many homes.
         """
     )
@@ -150,22 +153,22 @@ if not st.session_state.started:
     with st.expander("How to use (30 seconds)"):
         st.markdown(
             """
-1. Open the **sidebar**, enter your home’s details.  
-2. See **Predictor** for energy & bill estimates.  
-3. Open **Recommendations** for upgrade options.  
-4. Use **Batch & Export** for multiple homes.  
+1. Open the **sidebar**, enter your home’s details.
+2. See **Predictor** for energy & bill estimates.
+3. Open **Recommendations** for upgrade options.
+4. Use **Batch & Export** for multiple homes.
             """
         )
 
-    # --- License notice ---
+    # --- License notice (FIXED LINK to your repo) ---
     st.markdown(
         """
         <hr>
         <p style='text-align:center; font-size:12px; color:gray;'>
-        © 2025 Tech Innovation Experts Ltd. | 
+        © 2025 Tech Innovation Experts Ltd. |
         Licensed for demonstration & educational use only.<br>
-        <a href="https://github.com/yourusername/ai_energy_advisor_nz/blob/main/LICENSE.txt"
-        target="_blank">View full license</a>
+        <a href="https://github.com/arminbaghaei/ai_energy_advisor_nz/blob/main/LICENSE.txt" target="_blank">
+        View full license</a>
         </p>
         """,
         unsafe_allow_html=True
@@ -177,6 +180,7 @@ if not st.session_state.started:
         RERUN()
 
     st.stop()
+
 
 
 # =====================
