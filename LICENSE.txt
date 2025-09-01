@@ -1,0 +1,25 @@
+Copyright © 2025 Tech Innovation Experts Ltd. All rights reserved.
+
+This software, including its source code, user interface, design, documentation, and related materials 
+("the Software") is the proprietary property of Tech Innovation Experts Ltd.
+
+Permission is hereby granted to any individual to view and use this Software for personal, educational, 
+and demonstration purposes only, subject to the following conditions:
+
+1. Restrictions
+   a. The Software may not be used, copied, modified, merged, published, distributed, sublicensed, or sold 
+      for any commercial purpose without prior written consent from Tech Innovation Experts Ltd.
+   b. Derivative works based on the Software are prohibited unless explicitly authorized in writing.
+   c. Removing or altering copyright, branding, or attribution notices is strictly prohibited.
+
+2. Disclaimer
+   The Software is provided "as is", without warranty of any kind, express or implied, including but not 
+   limited to the warranties of merchantability, fitness for a particular purpose, and non-infringement. 
+   In no event shall Tech Innovation Experts Ltd. or its contributors be liable for any claim, damages, 
+   or other liability arising from, out of, or in connection with the Software or the use thereof.
+
+3. Commercial Licensing
+   For commercial licensing, partnerships, or redistribution inquiries, please contact:
+   info@techinnovationexperts.co.nz
+
+By using this Software, you acknowledge and agree to be bound by the terms of this License.
