@@ -112,7 +112,7 @@ sample_df = load_sample()
 model, scores = train_model(sample_df)
 
 # ==============================================================
-# INTRO GATE (must be before ANY st.title/tabs/sidebar rendering)
+# INTRO GATE (must be before ANY main UI)
 # ==============================================================
 if "started" not in st.session_state:
     st.session_state.started = False
@@ -122,7 +122,7 @@ if not st.session_state.started:
     intro_c1, intro_c2 = st.columns([1, 6])
     with intro_c1:
         try:
-            st.image("Logo.png", width=44)
+            st.image("Logo.png", width=48)
         except Exception:
             st.write("")  # no-op if missing
     with intro_c2:
@@ -143,9 +143,9 @@ if not st.session_state.started:
     st.subheader("What this tool does")
     st.markdown(
         """
-- **Predicts** your home’s annual electricity use and bill from NZ-specific inputs (climate zone, floor area, insulation, etc.).
-- **Recommends** upgrades (heat pump, insulation, glazing, PV, etc.) ranked by savings.
-- **Explains seasonality** with an estimated monthly breakdown.
+- **Predicts** your home’s annual electricity use and bill from NZ-specific inputs (climate zone, floor area, insulation, etc.).  
+- **Recommends** upgrades (heat pump, insulation, glazing, PV, etc.) ranked by savings.  
+- **Explains seasonality** with an estimated monthly breakdown.  
 - **Batch mode** lets you upload a CSV of many homes.
         """
     )
@@ -153,14 +153,14 @@ if not st.session_state.started:
     with st.expander("How to use (30 seconds)"):
         st.markdown(
             """
-1. Open the **sidebar**, enter your home’s details.
-2. See **Predictor** for energy & bill estimates.
-3. Open **Recommendations** for upgrade options.
+1. Open the **sidebar**, enter your home’s details.  
+2. See **Predictor** for energy & bill estimates.  
+3. Open **Recommendations** for upgrade options.  
 4. Use **Batch & Export** for multiple homes.
             """
         )
 
-    # --- License notice (FIXED LINK to your repo) ---
+    # --- License notice (points to your repo) ---
     st.markdown(
         """
         <hr>
@@ -180,6 +180,7 @@ if not st.session_state.started:
         RERUN()
 
     st.stop()
+
 
 
 
