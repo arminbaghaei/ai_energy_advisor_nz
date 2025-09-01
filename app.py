@@ -149,11 +149,44 @@ if not st.session_state.started:
 # -----------------------------
 # Full App UI (after Next)
 # -----------------------------
+# -----------------------------
+# Intro gate (shows once)
+# -----------------------------
+if "started" not in st.session_state:
+    st.session_state.started = False
+
+if not st.session_state.started:
+    st.title("🏠 AI Energy Advisor for NZ Homes")
+    st.subheader("What this tool does")
+    st.markdown(
+        """
+- **Predicts** your home’s annual electricity use and bill using NZ-specific inputs (H1 climate zone, size, age, insulation, glazing, airtightness, heating, hot water, PV).
+- **Recommends** retrofit options (heat pump, insulation, glazing, draught-stopping, HPWH, PV) ranked by **kWh** and **$** savings.
+- **Explains seasonality** via an estimated monthly breakdown.
+- **Batch mode** lets you upload a CSV of homes for bulk predictions.
+        """
+    )
+    with st.expander("How to use (30-second guide)"):
+        st.markdown(
+            """
+1. In the **sidebar**, pick your **NZ H1 climate zone** (by region name), floor area, and current systems.  
+2. Open **Predictor** to see energy & bill estimates.  
+3. Open **Recommendations** to view savings and typical capex ranges.  
+4. Use **Batch & Export** if you have a CSV for many homes.
+            """
+        )
+    st.caption("Disclaimer: Prototype estimates only — get quotes and professional advice for decisions.")
+    if st.button("Next → Show the main features", type="primary"):
+        st.session_state.started = True
+        st.rerun()
+    st.stop()  # don’t render the rest until Next is pressed
+
+# -----------------------------
+# UI (main app after Next)
+# -----------------------------
 st.title("🏠 AI Energy Advisor for NZ Homes")
 st.caption("ML prediction + personalized retrofit advice (prototype)")
 
-with st.sidebar:
-    st.header("🏡 House inputs")
 
     # Friendly climate zone selector with tooltip; returns numeric 1–6
     selected_zone = st.selectbox(
