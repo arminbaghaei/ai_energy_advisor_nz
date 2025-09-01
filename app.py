@@ -8,6 +8,14 @@ import matplotlib.pyplot as plt
 
 st.set_page_config(page_title="AI Energy Advisor (NZ Homes)", layout="wide")
 
+# ------------------------------------------------------------------
+# Rerun compatibility (Streamlit 1.36+: st.rerun; older: experimental)
+# ------------------------------------------------------------------
+try:
+    RERUN = st.rerun
+except AttributeError:
+    RERUN = st.experimental_rerun
+
 # -----------------------------
 # Helpers
 # -----------------------------
@@ -24,7 +32,6 @@ INPUT_COLUMNS = [
     "window_glazing","air_tightness","occupancy","has_mechanical_ventilation",
     "hot_water_system","solar_pv_kw","electricity_price_nzd_per_kwh"
 ]
-
 TARGET = "annual_energy_kwh"
 
 # NZ Building Code H1 climate zones (friendly labels -> numeric code)
@@ -56,10 +63,7 @@ def train_model(df: pd.DataFrame):
     model = RandomForestRegressor(n_estimators=300, random_state=42, n_jobs=-1)
     model.fit(X_tr, y_tr)
     preds = model.predict(X_te)
-    return model, {
-        "r2": float(r2_score(y_te, preds)),
-        "mae": float(mean_absolute_error(y_te, preds))
-    }
+    return model, {"r2": float(r2_score(y_te, preds)), "mae": float(mean_absolute_error(y_te, preds))}
 
 def predict_one(model, features: dict) -> float:
     row = pd.DataFrame([features])[INPUT_COLUMNS]
@@ -115,7 +119,7 @@ sample_df = load_sample()
 model, scores = train_model(sample_df)
 
 # =========================================
-# Intro screen (shows once, then "Next →")
+# Intro gate
 # =========================================
 if "started" not in st.session_state:
     st.session_state.started = False
@@ -125,70 +129,35 @@ if not st.session_state.started:
     st.subheader("What this tool does")
     st.markdown(
         """
-- **Predicts** annual household electricity use and bill from key home details (NZ H1 climate zone, size, age, insulation, windows, airtightness, heating, hot water, PV).
-- **Recommends** upgrades (e.g., heat pump, insulation, glazing, draught-stopping, HPWH, PV) ranked by **kWh** and **$ saved**.
-- **Explains seasonality** with an estimated monthly breakdown.
-- **Batch mode**: upload a CSV of homes to get predictions for all.
+- **Predicts** your home’s annual electricity use and bill from NZ-specific inputs (H1 climate zone, floor area, age, insulation, glazing, airtightness, heating, hot water, PV).  
+- **Recommends** upgrades (heat pump, insulation, glazing, draught-stopping, HPWH, PV) ranked by **kWh** and **$** savings.  
+- **Explains seasonality** with an estimated monthly breakdown.  
+- **Batch mode** to upload a CSV of many homes.
         """
     )
-    with st.expander("How to use in 30 seconds"):
+    with st.expander("How to use (30 seconds)"):
         st.markdown(
             """
-1. Open the **sidebar** and choose your **NZ H1 climate zone** (by region name), floor area, and current systems.  
-2. Go to **Predictor** to see energy & bill estimates.  
-3. Open **Recommendations** to see savings and capex ranges.  
-4. Use **Batch & Export** if you have a CSV of multiple homes.
+1. Open the **sidebar**, choose your **NZ H1 climate zone** (by region name) and house details.  
+2. See **Predictor** for energy & bill estimates.  
+3. Open **Recommendations** for savings and capex ranges.  
+4. Use **Batch & Export** if you have a CSV.
             """
         )
-    st.caption("Disclaimer: Prototype estimates only — always get quotes and professional advice for investment decisions.")
-    if st.button("Next → Show the full features", type="primary"):
+    st.caption("Disclaimer: Prototype estimates only — seek quotes and professional advice for decisions.")
+    if st.button("Next → Show the main features", type="primary"):
         st.session_state.started = True
-        st.rerun()
+        RERUN()
     st.stop()
 
 # -----------------------------
 # Full App UI (after Next)
 # -----------------------------
-# -----------------------------
-# Intro gate (shows once)
-# -----------------------------
-if "started" not in st.session_state:
-    st.session_state.started = False
-
-if not st.session_state.started:
-    st.title("🏠 AI Energy Advisor for NZ Homes")
-    st.subheader("What this tool does")
-    st.markdown(
-        """
-- **Predicts** your home’s annual electricity use and bill using NZ-specific inputs (H1 climate zone, size, age, insulation, glazing, airtightness, heating, hot water, PV).
-- **Recommends** retrofit options (heat pump, insulation, glazing, draught-stopping, HPWH, PV) ranked by **kWh** and **$** savings.
-- **Explains seasonality** via an estimated monthly breakdown.
-- **Batch mode** lets you upload a CSV of homes for bulk predictions.
-        """
-    )
-    with st.expander("How to use (30-second guide)"):
-        st.markdown(
-            """
-1. In the **sidebar**, pick your **NZ H1 climate zone** (by region name), floor area, and current systems.  
-2. Open **Predictor** to see energy & bill estimates.  
-3. Open **Recommendations** to view savings and typical capex ranges.  
-4. Use **Batch & Export** if you have a CSV for many homes.
-            """
-        )
-    st.caption("Disclaimer: Prototype estimates only — get quotes and professional advice for decisions.")
-    if st.button("Next → Show the main features", type="primary"):
-        st.session_state.started = True
-        st.rerun()
-    st.stop()  # don’t render the rest until Next is pressed
-
-# -----------------------------
-# UI (main app after Next)
-# -----------------------------
 st.title("🏠 AI Energy Advisor for NZ Homes")
 st.caption("ML prediction + personalized retrofit advice (prototype)")
 
-
-    # Friendly climate zone selector with tooltip; returns numeric 1–6
+with st.sidebar:
+    st.header("🏡 House inputs")
     selected_zone = st.selectbox(
         "NZBC H1 climate zone",
         options=CLIMATE_ZONE_OPTIONS,
@@ -226,9 +195,10 @@ st.caption("ML prediction + personalized retrofit advice (prototype)")
     }
 
     st.caption("Hint: 1=Auckland/Northland · 2=Upper NI · 3=Lower NI · 4=Top of SI · 5=Canterbury/coastal Otago · 6=Central Plateau/Southern Alps/Southland")
-    if st.button("Back to intro"):
+    st.divider()
+    if st.button("⬅️ Back to intro"):
         st.session_state.started = False
-        st.rerun()
+        RERUN()
 
 tab1, tab2, tab3, tab4 = st.tabs(["🔮 Predictor","💡 Recommendations","💬 Advisor Chat","📦 Batch & Export"])
 
@@ -257,39 +227,49 @@ with tab2:
 
 with tab3:
     st.subheader("Ask the advisor")
+    # Initial message
     if "chat" not in st.session_state:
         st.session_state.chat = [
             {"role":"assistant","content": "Kia ora! Tell me your goals—lower bills, reduce damp/mould risk, or increase comfort?"}
         ]
+    # Render history
     for msg in st.session_state.chat:
         with st.chat_message(msg["role"]):
             st.write(msg["content"])
+    # User input
     user_msg = st.chat_input("Type your question")
     if user_msg:
         st.session_state.chat.append({"role":"user","content": user_msg})
-        # build quick tips from current top 3 recommendations
+
+        # Rebuild recommendations snapshot for tailored tips
         recs_df = evaluate_measures(model, features, pred_kwh, features["electricity_price_nzd_per_kwh"])
-        tips = []
         top = recs_df.head(3).to_dict(orient="records")
-        for t in top:
-            tips.append(f"- {t['measure']} (~{t['annual_saving_kwh']:,.0f} kWh / ${t['annual_saving_nzd']:,.0f} per year)")
-        if features["insulation_level"] in ["poor","moderate"]:
-            tips.append("- Improve insulation levels; it reduces heating demand and improves comfort.")
-        if features["window_glazing"] == "single":
-            tips.append("- Upgrade from single to double glazing; combine with heavy curtains.")
+        tips = [f"- {t['measure']} (~{t['annual_saving_kwh']:,.0f} kWh / ${t['annual_saving_nzd']:,.0f}/yr)" for t in top]
+
+        # Damp / mould risk quick tips (auto triggers)
+        mould_risk = (
+            features["insulation_level"] in ["poor","moderate"] or
+            features["air_tightness"] == "leaky" or
+            features["window_glazing"] == "single" or
+            features["climate_zone"] >= 4
+        )
+        asked_about_mould = any(k in user_msg.lower() for k in ["mould", "mold", "damp", "condensation"])
+
+        if mould_risk or asked_about_mould:
+            tips.insert(0, "• **Damp/mould risk tips:** ensure kitchen & bathroom extract fans vent outside; heat main living area to ≥18 °C; fix draughts; use thermal curtains; maintain RH < 60%.")
+
         if features["heating_system"] != "heat_pump":
             tips.append("- Consider a modern heat pump for efficient heating and dehumidification.")
-        if features["air_tightness"] == "leaky":
-            tips.append("- Draught-proof doors & windows; maintain fresh air with trickle vents or HRV.")
         if features["solar_pv_kw"] < 1.0:
             tips.append("- Add rooftop PV if the roof has good sun exposure.")
+
         resp = [
-            f"Based on your home (~{pred_kwh:,.0f} kWh/yr, ~${pred_cost:,.0f}/yr), try:",
+            f"Based on your home (~{pred_kwh:,.0f} kWh/yr, ~${pred_cost:,.0f}/yr), suggestions:",
             *tips,
             "Want me to sort by lowest likely capex?"
         ]
         st.session_state.chat.append({"role":"assistant","content": "\n".join(resp)})
-        st.experimental_rerun()
+        RERUN()
 
 with tab4:
     st.subheader("Batch predict & export")
