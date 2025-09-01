@@ -1,4 +1,4 @@
-# 🏠 AI Energy Advisor for NZ Homes (Streamlit)
+# 🏠 Your Home Energy Advisor
 
 ML-based household energy **prediction** + **personalized retrofit advice** for New Zealand homes.
 
