@@ -141,7 +141,7 @@ if not st.session_state.started:
     if st.button("Next → Show the main features", type="primary"):
         st.session_state.started = True
         RERUN()
-    st.stop()  # IMPORTANT: do not render anything else until Next is pressed
+    st.stop()
 
 # =====================
 # MAIN APP (after Next)
@@ -150,9 +150,15 @@ st.title("🏠 Your Home Energy Advisor")
 st.caption("ML prediction + personalized retrofit advice (prototype)")
 
 with st.sidebar:
+    # --- Company logo at the very top (file in repo root) ---
+    try:
+        st.image("logo.png", use_column_width=True)
+    except Exception:
+        st.info("Upload `logo.png` to the repo root to show your logo here.")
+
+    st.markdown("<div style='margin-top:4px;'></div>", unsafe_allow_html=True)
     st.header("🏡 House inputs")
-    st.sidebar.image("logo.png", width=180)
-    st.header("🏡 House inputs")
+
     selected_zone = st.selectbox(
         "NZBC H1 climate zone",
         options=CLIMATE_ZONE_OPTIONS,
@@ -189,11 +195,16 @@ with st.sidebar:
         "electricity_price_nzd_per_kwh": float(price),
     }
 
-    st.caption("Hint: 1=Auckland/Northland · 2=Upper NI · 3=Lower NI · 4=Top of SI · 5=Canterbury/coastal Otago · 6=Central Plateau/Southern Alps/Southland")
+    st.caption(
+        "Hint: 1=Auckland/Northland · 2=Upper NI · 3=Lower NI · 4=Top of SI · "
+        "5=Canterbury/coastal Otago · 6=Central Plateau/Southern Alps/Southland"
+    )
     st.divider()
     if st.button("⬅️ Back to intro"):
         st.session_state.started = False
         RERUN()
+
+# --- Make tabs more prominent ---
 st.markdown(
     """
     <style>
@@ -232,7 +243,6 @@ with tab1:
     ax.set_title("Monthly Energy Use (Estimated)", fontsize=10)
     plt.tight_layout()
     st.pyplot(fig)
-
 
 with tab2:
     st.subheader("Top retrofit & behavior recommendations")
